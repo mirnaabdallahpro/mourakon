@@ -1,9 +1,54 @@
 import { useState } from "react";
 import { FaWhatsapp } from "react-icons/fa";
 import mourankontransfertlogo from "./medias/mourankontransferlogo.png";
+
+import airtelMoneyLogo from "./assets/airtel-logo.png";
+import bankOfAfricaLogo from "./assets/bmce.png";
+import cashplusLogo from "./assets/cashplus.jpg";
+import cihLogo from "./assets/cih.png";
+import EcobankLogo from "./assets/Ecobank_Logo.svg";
+import wafacashLogo from "./assets/wafacash.png";
+
+
 import "./SimulateurConverter.css";
 
 
+const PARTNERS = {
+  maroc: [
+    {
+      name: "Cash Plus",
+      logo: cashplusLogo,
+    },
+    {
+      name: "Wafacash",
+      logo: wafacashLogo,
+    },
+    {
+      name: "Bank of Africa",
+      logo: bankOfAfricaLogo,
+    },
+    {
+      name: "CIH",
+      logo: cihLogo,
+    },
+  ],
+
+  tchad: [
+    {
+      name: "Airtel Money",
+      logo: airtelMoneyLogo,
+    },
+     {
+      name: "Ecobank",
+      logo: EcobankLogo,
+    },
+  ],
+};
+
+
+/* ============================================================
+   CONFIGURATION DES TRANSFERTS
+   ============================================================ */
 
 const TRANSFER_CONFIG = {
   TD_MA: {
@@ -19,8 +64,8 @@ const TRANSFER_CONFIG = {
       currency: "MAD",
     },
 
-    // 1 MAD = 64 FCFA
-    rate: 64,
+    // 1 MAD = 60 FCFA
+    rate: 60,
 
     // 4% de commission
     commission: 0.04,
@@ -42,8 +87,8 @@ const TRANSFER_CONFIG = {
       currency: "FCFA",
     },
 
-    // 1 MAD = 64 FCFA
-    rate: 64,
+    // 1 MAD = 60 FCFA
+    rate: 60,
 
     // Aucun frais
     commission: 0,
@@ -53,45 +98,139 @@ const TRANSFER_CONFIG = {
   },
 };
 
+function PartnersSection() {
+  return (
+    <div className="partners-section">
+
+      <div className="partners-header">
+        <div className="partners-title">
+          <span className="partners-icon">✓</span>
+
+          <div>
+            <h3>Nos partenaires</h3>
+            <p>
+              Des institutions financières partenaires
+              pour faciliter vos transferts.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="partners-country">
+
+        <div className="partners-country-header">
+          <span className="partners-flag">🇲🇦</span>
+
+          <div>
+            <strong>Maroc</strong>
+            <span>Partenaires financiers</span>
+          </div>
+        </div>
+
+        <div className="partners-grid">
+          {PARTNERS.maroc.map((partner) => (
+            <div
+              className="partner-logo-card"
+              key={partner.name}
+              title={partner.name}
+            >
+              <img
+                src={partner.logo}
+                alt={partner.name}
+                loading="lazy"
+              />
+
+              <span>{partner.name}</span>
+            </div>
+          ))}
+        </div>
+
+      </div>
+
+      <div className="partners-country">
+
+        <div className="partners-country-header">
+          <span className="partners-flag">🇹🇩</span>
+
+          <div>
+            <strong>Tchad</strong>
+            <span>Partenaires financiers</span>
+          </div>
+        </div>
+
+        <div className="partners-grid">
+          {PARTNERS.tchad.map((partner) => (
+            <div
+              className="partner-logo-card"
+              key={partner.name}
+              title={partner.name}
+            >
+              <img
+                src={partner.logo}
+                alt={partner.name}
+                loading="lazy"
+              />
+
+              <span>{partner.name}</span>
+            </div>
+          ))}
+        </div>
+
+      </div>
+
+      <div className="partners-security">
+        <span>🔒</span>
+        <span>
+          Transferts effectués via nos partenaires de confiance
+        </span>
+      </div>
+
+    </div>
+  );
+}
+
+
+/* ============================================================
+   APPLICATION
+   ============================================================ */
 
 function App() {
-  /* =======================================================
+
+  /* ==========================================================
      ETAT DU CORRIDOR
 
      TD_MA = Tchad → Maroc
      MA_TD = Maroc → Tchad
-  ======================================================= */
+     ========================================================== */
 
   const [direction, setDirection] = useState("TD_MA");
 
 
-  /* =======================================================
+  /* ==========================================================
      MODE DE CALCUL
 
-     SEND =
-     "Vous envoyez"
-
-     RECEIVE =
-     "Le bénéficiaire doit recevoir"
-  ======================================================= */
+     SEND = "Vous envoyez"
+     RECEIVE = "Le bénéficiaire doit recevoir"
+     ========================================================== */
 
   const [calculationMode, setCalculationMode] =
     useState("SEND");
 
 
-  /* =======================================================
+  /* ==========================================================
      MONTANTS
+     ========================================================== */
 
-     Les deux restent TOUJOURS de vrais inputs.
-  ======================================================= */
+  const [fromAmount, setFromAmount] =
+    useState("100000");
 
-  const [fromAmount, setFromAmount] = useState("100000");
-  const [toAmount, setToAmount] = useState("");
+  const [toAmount, setToAmount] =
+    useState("");
 
 
-  /* =======================================================
+  /* ==========================================================
      CONFIGURATION COURANTE
-  ======================================================= */
+     ========================================================== */
 
   const config = TRANSFER_CONFIG[direction];
 
@@ -105,10 +244,13 @@ function App() {
   } = config;
 
 
-  /* =======================================================
+  /* ==========================================================
      HELPERS
-  ======================================================= */
+     ========================================================== */
 
+  /**
+   * Nettoie la saisie utilisateur.
+   */
   const sanitizeAmount = (value) => {
     return value
       .replace(/\s/g, "")
@@ -117,6 +259,125 @@ function App() {
       .replace(/(\..*)\./g, "$1");
   };
 
+
+  /* ==========================================================
+     ARRONDISSEMENT FCFA
+     ========================================================== */
+
+  /**
+   * Arrondit toujours le FCFA au CENTAIN supérieur.
+   *
+   * Exemples :
+   *
+   * 106601     → 106700
+   * 106666.67  → 106700
+   * 106700     → 106700
+   * 106701     → 106800
+   *
+   * Le client voit donc toujours un montant
+   * sans décimales et payable en FCFA.
+   */
+  const roundFcfa = (amount) => {
+
+    if (
+      amount === "" ||
+      amount === null ||
+      amount === undefined
+    ) {
+      return 0;
+    }
+
+    const numericAmount = Number(amount);
+
+    if (
+      Number.isNaN(numericAmount) ||
+      numericAmount <= 0
+    ) {
+      return 0;
+    }
+
+    return Math.ceil(numericAmount / 100) * 100;
+  };
+
+
+  /* ==========================================================
+     FORMATAGE FCFA
+     ========================================================== */
+
+  /**
+   * Affiche le FCFA sans aucune décimale.
+   *
+   * Exemple :
+   *
+   * 106666.67
+   * ↓
+   * 106700
+   * ↓
+   * "106 700"
+   */
+  const formatFcfa = (amount) => {
+
+    if (
+      amount === "" ||
+      amount === null ||
+      amount === undefined
+    ) {
+      return "";
+    }
+
+    const roundedAmount =
+      roundFcfa(amount);
+
+    if (!roundedAmount) {
+      return "";
+    }
+
+    return new Intl.NumberFormat("fr-FR", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(roundedAmount);
+  };
+
+
+  /* ==========================================================
+     FORMATAGE MAD
+     ========================================================== */
+
+  /**
+   * Les MAD sont affichés avec 2 décimales.
+   *
+   * Exemple :
+   *
+   * 1666.666
+   * ↓
+   * "1 666,67"
+   */
+  const formatMad = (amount) => {
+
+    if (
+      amount === "" ||
+      amount === null ||
+      amount === undefined
+    ) {
+      return "";
+    }
+
+    const number = Number(amount);
+
+    if (Number.isNaN(number)) {
+      return "";
+    }
+
+    return new Intl.NumberFormat("fr-FR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(number);
+  };
+
+
+  /* ==========================================================
+     FORMATAGE GÉNÉRIQUE
+     ========================================================== */
 
   const formatNumber = (
     value,
@@ -144,89 +405,90 @@ function App() {
   };
 
 
-  /* =======================================================
-     CONVERSION
-     
-     Le taux est défini comme :
-
-     1 MAD = 64 FCFA
-  ======================================================= */
-
+  /* ==========================================================
+     CONVERSION FROM → TO
+     ========================================================== */
 
   /**
-   * Convertit le montant de FROM vers TO
-   * AVANT commission.
+   * Convertit le montant FROM vers TO
+   * avant commission.
+   *
+   * Tchad → Maroc :
+   *
+   * FCFA / 60 = MAD
+   *
+   * Maroc → Tchad :
+   *
+   * MAD × 60 = FCFA
    */
   const convertFromTo = (amount) => {
 
-    if (!amount || Number(amount) <= 0) {
+    if (
+      !amount ||
+      Number(amount) <= 0
+    ) {
       return 0;
     }
 
-    const numericAmount = Number(amount);
+    const numericAmount =
+      Number(amount);
 
-    /*
-      Tchad → Maroc
 
-      FCFA → MAD
-      FCFA / 64
-    */
+    /* Tchad → Maroc */
 
     if (direction === "TD_MA") {
+
       return numericAmount / rate;
     }
 
 
-    /*
-      Maroc → Tchad
-
-      MAD → FCFA
-      MAD × 64
-    */
+    /* Maroc → Tchad */
 
     return numericAmount * rate;
   };
 
 
+  /* ==========================================================
+     CONVERSION TO → FROM
+     ========================================================== */
+
   /**
-   * Convertit le montant TO vers FROM
-   * AVANT commission.
+   * Conversion inverse avant commission.
    */
   const convertToFrom = (amount) => {
 
-    if (!amount || Number(amount) <= 0) {
+    if (
+      !amount ||
+      Number(amount) <= 0
+    ) {
       return 0;
     }
 
-    const numericAmount = Number(amount);
+    const numericAmount =
+      Number(amount);
 
 
-    /*
-      Tchad → Maroc
-
-      MAD → FCFA
-      MAD × 64
+    /* Tchad → Maroc
+       MAD → FCFA
     */
 
     if (direction === "TD_MA") {
+
       return numericAmount * rate;
     }
 
 
-    /*
-      Maroc → Tchad
-
-      FCFA → MAD
-      FCFA / 64
+    /* Maroc → Tchad
+       FCFA → MAD
     */
 
     return numericAmount / rate;
   };
 
 
-  /* =======================================================
+  /* ==========================================================
      CALCUL DEPUIS LE MONTANT ENVOYÉ
-  ======================================================= */
+     ========================================================== */
 
   const calculateFromAmount = (amount) => {
 
@@ -234,79 +496,128 @@ function App() {
       convertFromTo(amount);
 
 
-    /*
-      La commission est prélevée sur
-      le montant converti.
+    if (!convertedAmount) {
+      return 0;
+    }
 
-      Exemple :
 
-      100 000 FCFA
-      ↓
-      1 562.50 MAD
-      ↓
-      - 4%
-      ↓
-      1 500 MAD NET
-    */
+    /* Application de la commission */
 
     const netAmount =
       convertedAmount *
       (1 - commission);
 
 
+    /*
+
+       Si la destination est le Tchad,
+       le résultat doit être arrondi au
+       centaine supérieur.
+
+    */
+
+    if (direction === "MA_TD") {
+
+      return roundFcfa(netAmount);
+    }
+
+
+    /*
+
+       Si la destination est le Maroc,
+       on conserve les décimales MAD.
+
+    */
+
     return netAmount;
   };
 
 
-  /* =======================================================
+  /* ==========================================================
      CALCUL DEPUIS LE MONTANT À RECEVOIR
-  ======================================================= */
+     ========================================================== */
 
   const calculateRequiredFromAmount = (
     amount
   ) => {
 
-    /*
-      Si commission = 0
-
-      montant à envoyer =
-      montant à recevoir converti
-    */
-
-    if (commission === 0) {
-      return convertToFrom(amount);
+    if (
+      !amount ||
+      Number(amount) <= 0
+    ) {
+      return 0;
     }
 
 
+    /* ========================================================
+       TCHAD → MAROC
+       ======================================================== */
+
+    if (direction === "TD_MA") {
+
+      /*
+       * Le montant demandé est en MAD.
+       *
+       * On calcule le montant brut nécessaire
+       * avant commission.
+       */
+
+      const desiredReceive =
+        Number(amount);
+
+
+      const grossMad =
+        desiredReceive /
+        (1 - commission);
+
+
+      /*
+       * Conversion MAD → FCFA.
+       */
+
+      const requiredFcfa =
+        grossMad * rate;
+
+
+      /*
+       * Le client doit envoyer un montant
+       * FCFA arrondi à la centaine supérieure.
+       */
+
+      return roundFcfa(requiredFcfa);
+    }
+
+
+    /* ========================================================
+       MAROC → TCHAD
+       ======================================================== */
+
     /*
-      Avec commission :
+     * Le montant demandé est en FCFA.
+     *
+     * On arrondit immédiatement au centaine
+     * supérieur.
+     */
 
-      montant brut =
-      montant net / (1 - commission)
-
-      Exemple :
-
-      1 500 MAD net
-      /
-      0.96
-      =
-      1 562.50 MAD brut
-    */
-
-    const grossAmount =
-      Number(amount) /
-      (1 - commission);
+    const desiredReceiveFcfa =
+      roundFcfa(Number(amount));
 
 
-    return convertToFrom(
-      grossAmount
-    );
+    /*
+     * Conversion FCFA → MAD.
+     */
+
+    const requiredMad =
+      desiredReceiveFcfa / rate;
+
+
+    return requiredMad;
   };
 
 
-  /* =======================================================
+  /* ==========================================================
      CHANGEMENT DU MONTANT FROM
-  ======================================================= */
+     ========================================================== */
 
   const handleFromAmountChange = (
     event
@@ -322,31 +633,61 @@ function App() {
 
 
     if (value === "") {
+
       setToAmount("");
+
       return;
     }
 
-
-    /*
-      Si l'utilisateur modifie
-      "Vous envoyez"
-    */
 
     const calculatedAmount =
       calculateFromAmount(value);
 
 
+    if (!calculatedAmount) {
+
+      setToAmount("");
+
+      return;
+    }
+
+
+    /* ========================================================
+       TCHAD → MAROC
+       FROM = FCFA
+       TO = MAD
+       ======================================================== */
+
+    if (direction === "TD_MA") {
+
+      setToAmount(
+        Number(calculatedAmount)
+          .toFixed(0)
+      );
+
+      return;
+    }
+
+
+    /* ========================================================
+       MAROC → TCHAD
+       FROM = MAD
+       TO = FCFA
+       ======================================================== */
+
     setToAmount(
-      calculatedAmount
-        ? calculatedAmount.toFixed(2)
-        : ""
+      String(
+        roundFcfa(
+          calculatedAmount
+        )
+      )
     );
   };
 
 
-  /* =======================================================
+  /* ==========================================================
      CHANGEMENT DU MONTANT TO
-  ======================================================= */
+     ========================================================== */
 
   const handleToAmountChange = (
     event
@@ -358,19 +699,67 @@ function App() {
       );
 
 
-    setToAmount(value);
-
-
     if (value === "") {
+
+      setToAmount("");
       setFromAmount("");
+
       return;
     }
 
 
-    /*
-      Si l'utilisateur modifie
-      "Le bénéficiaire doit recevoir"
-    */
+    /* ========================================================
+       MAROC → TCHAD
+       ======================================================== */
+
+    if (direction === "MA_TD") {
+
+      /*
+       * Le montant bénéficiaire est FCFA.
+       *
+       * On le transforme immédiatement
+       * en montant payable au centaine.
+       */
+
+      const roundedFcfa =
+        roundFcfa(
+          Number(value)
+        );
+
+
+      setToAmount(
+        String(roundedFcfa)
+      );
+
+
+      /*
+       * Calcul du montant MAD nécessaire.
+       */
+
+      const requiredMad =
+        calculateRequiredFromAmount(
+          roundedFcfa
+        );
+
+
+      setFromAmount(
+        requiredMad
+          ? Number(requiredMad)
+              .toFixed(0)
+          : ""
+      );
+
+
+      return;
+    }
+
+
+    /* ========================================================
+       TCHAD → MAROC
+       ======================================================== */
+
+    setToAmount(value);
+
 
     const calculatedAmount =
       calculateRequiredFromAmount(
@@ -378,28 +767,33 @@ function App() {
       );
 
 
+    if (!calculatedAmount) {
+
+      setFromAmount("");
+
+      return;
+    }
+
+
+    /*
+     * FROM = FCFA.
+     *
+     * Toujours arrondi à 100.
+     */
+
     setFromAmount(
-      calculatedAmount
-        ? calculatedAmount.toFixed(2)
-        : ""
+      String(
+        roundFcfa(
+          calculatedAmount
+        )
+      )
     );
   };
 
 
-  /* =======================================================
-     TOGGLE HORIZONTAL
-     
-     Change :
-
-     🇹🇩 Tchad → 🇲🇦 Maroc
-
-     en
-
-     🇲🇦 Maroc → 🇹🇩 Tchad
-
-     MAIS NE CHANGE PAS LE MODE
-     SEND / RECEIVE.
-  ======================================================= */
+  /* ==========================================================
+     CHANGEMENT DE DIRECTION
+     ========================================================== */
 
   const handleDirectionToggle = () => {
 
@@ -412,15 +806,6 @@ function App() {
     setDirection(newDirection);
 
 
-    /*
-      On conserve le montant "from"
-      comme référence.
-
-      On recalcule simplement
-      le montant "to" avec les
-      nouvelles règles.
-    */
-
     const currentAmount =
       Number(fromAmount);
 
@@ -429,17 +814,25 @@ function App() {
       !currentAmount ||
       currentAmount <= 0
     ) {
+
       setToAmount("");
+
       return;
     }
 
 
     const newConfig =
-      TRANSFER_CONFIG[newDirection];
+      TRANSFER_CONFIG[
+        newDirection
+      ];
 
 
     let convertedAmount;
 
+
+    /* ========================================================
+       TCHAD → MAROC
+       ======================================================== */
 
     if (newDirection === "TD_MA") {
 
@@ -447,7 +840,14 @@ function App() {
         currentAmount /
         newConfig.rate;
 
-    } else {
+    }
+
+
+    /* ========================================================
+       MAROC → TCHAD
+       ======================================================== */
+
+    else {
 
       convertedAmount =
         currentAmount *
@@ -455,31 +855,44 @@ function App() {
     }
 
 
-    /*
-      Application de la commission
-    */
+    /* ========================================================
+       COMMISSION
+       ======================================================== */
 
     convertedAmount *=
       1 - newConfig.commission;
 
 
+    /* ========================================================
+       FORMAT FINAL
+       ======================================================== */
+
+    if (
+      newDirection === "MA_TD"
+    ) {
+
+      setToAmount(
+        String(
+          roundFcfa(
+            convertedAmount
+          )
+        )
+      );
+
+      return;
+    }
+
+
     setToAmount(
-      convertedAmount.toFixed(2)
+      Number(convertedAmount)
+        .toFixed(0)
     );
   };
 
 
-  /* =======================================================
+  /* ==========================================================
      TOGGLE VERTICAL
-     
-     Change uniquement le mode :
-
-     SEND
-     ↓
-     RECEIVE
-
-     Les pays ne changent PAS.
-  ======================================================= */
+     ========================================================== */
 
   const handleCalculationToggle = () => {
 
@@ -492,9 +905,9 @@ function App() {
   };
 
 
-  /* =======================================================
+  /* ==========================================================
      WHATSAPP
-  ======================================================= */
+     ========================================================== */
 
   const openWhatsApp = (
     phone,
@@ -503,6 +916,10 @@ function App() {
 
     let message = "";
 
+
+    /* ========================================================
+       TCHAD → MAROC
+       ======================================================== */
 
     if (
       direction === "TD_MA"
@@ -515,17 +932,17 @@ function App() {
         message =
           `Bonjour, je souhaite effectuer un transfert Tchad → Maroc.
 
-Montant à envoyer : ${formatNumber(
-            fromAmount,
-            2
+Montant à envoyer : ${formatFcfa(
+            fromAmount
           )} FCFA
 
-Montant à recevoir : ${formatNumber(
-            toAmount,
-            2
+Montant à recevoir : ${formatMad(
+            toAmount
           )} MAD
 
-Commission : ${commission * 100}%
+Commission : ${
+            commission * 100
+          }%
 
 Merci de m'indiquer la procédure à suivre.`;
 
@@ -534,20 +951,26 @@ Merci de m'indiquer la procédure à suivre.`;
         message =
           `Bonjour, je souhaite effectuer un transfert Tchad → Maroc.
 
-Montant envoyé : ${formatNumber(
-            fromAmount,
-            2
+Montant envoyé : ${formatFcfa(
+            fromAmount
           )} FCFA
 
-Montant à retirer : ${formatNumber(
-            toAmount,
-            2
+Montant à retirer : ${formatMad(
+            toAmount
           )} MAD
 
 Merci de m'indiquer la procédure à suivre.`;
       }
 
-    } else {
+
+    }
+
+
+    /* ========================================================
+       MAROC → TCHAD
+       ======================================================== */
+
+    else {
 
       if (
         agentType === "deposit"
@@ -556,14 +979,12 @@ Merci de m'indiquer la procédure à suivre.`;
         message =
           `Bonjour, je souhaite effectuer un transfert Maroc → Tchad.
 
-Montant à envoyer : ${formatNumber(
-            fromAmount,
-            2
+Montant à envoyer : ${formatMad(
+            fromAmount
           )} MAD
 
-Montant à recevoir : ${formatNumber(
-            toAmount,
-            2
+Montant à recevoir : ${formatFcfa(
+            toAmount
           )} FCFA
 
 Commission : 0%
@@ -575,14 +996,12 @@ Merci de m'indiquer la procédure à suivre.`;
         message =
           `Bonjour, je souhaite effectuer un transfert Maroc → Tchad.
 
-Montant envoyé : ${formatNumber(
-            fromAmount,
-            2
+Montant envoyé : ${formatMad(
+            fromAmount
           )} MAD
 
-Montant à retirer : ${formatNumber(
-            toAmount,
-            2
+Montant à retirer : ${formatFcfa(
+            toAmount
           )} FCFA
 
 Merci de m'indiquer la procédure à suivre.`;
@@ -590,9 +1009,15 @@ Merci de m'indiquer la procédure à suivre.`;
     }
 
 
+    /* ========================================================
+       WHATSAPP URL
+       ======================================================== */
+
     const url =
       `https://api.whatsapp.com/send/?phone=${phone}` +
-      `&text=${encodeURIComponent(message)}` +
+      `&text=${encodeURIComponent(
+        message
+      )}` +
       `&type=phone_number` +
       `&app_absent=0`;
 
@@ -605,32 +1030,30 @@ Merci de m'indiquer la procédure à suivre.`;
   };
 
 
-  /* =======================================================
+  /* ==========================================================
      RENDER
-  ======================================================= */
+     ========================================================== */
 
   return (
     <div className="page">
 
-      {/* =================================================
+      {/* =====================================================
           HEADER
-      ================================================= */}
+          ===================================================== */}
 
       <header className="header">
 
         <div className="brand">
 
-           <img
-    src={mourankontransfertlogo}
-    alt="mourakontransfert"
-    className="brand-logo"
-  />
+          <img
+            src={mourankontransfertlogo}
+            alt="mourakontransfert"
+            className="brand-logo"
+          />
 
-  <span className="brand-name">
-    Mourakon
-  </span>
-
-        
+          <span className="brand-name">
+            Mourakon
+          </span>
 
         </div>
 
@@ -642,26 +1065,23 @@ Merci de m'indiquer la procédure à suivre.`;
       </header>
 
 
-      {/* =================================================
+      {/* =====================================================
           MAIN
-      ================================================= */}
+          ===================================================== */}
 
-      <main className="main-container" >
+      <main className="main-container">
 
-
-        {/* =================================================
+        {/* ===================================================
             SIMULATEUR
-        ================================================= */}
+            =================================================== */}
 
         <section className="simulator-card">
 
-
           {/* ===============================================
               DIRECTION
-          =============================================== */}
+              =============================================== */}
 
           <div className="country-selector">
-
 
             {/* FROM */}
 
@@ -717,14 +1137,11 @@ Merci de m'indiquer la procédure à suivre.`;
 
           {/* ===============================================
               MONTANTS
-          =============================================== */}
+              =============================================== */}
 
           <div className="amount-container">
 
-
-            {/* =============================================
-                FROM INPUT
-            ============================================= */}
+            {/* FROM */}
 
             <div className="amount-group">
 
@@ -748,7 +1165,9 @@ Merci de m'indiquer la procédure à suivre.`;
                   }
                   placeholder="100 000"
                   className="amount-field"
-                  aria-label={`Montant en ${from.currency}`}
+                  aria-label={
+                    `Montant en ${from.currency}`
+                  }
                 />
 
 
@@ -761,9 +1180,7 @@ Merci de m'indiquer la procédure à suivre.`;
             </div>
 
 
-            {/* =============================================
-                TOGGLE VERTICAL
-            ============================================= */}
+            {/* TOGGLE VERTICAL */}
 
             <button
               type="button"
@@ -778,9 +1195,7 @@ Merci de m'indiquer la procédure à suivre.`;
             </button>
 
 
-            {/* =============================================
-                TO INPUT
-            ============================================= */}
+            {/* TO */}
 
             <div className="amount-group">
 
@@ -804,7 +1219,9 @@ Merci de m'indiquer la procédure à suivre.`;
                   }
                   placeholder="1 500"
                   className="amount-field"
-                  aria-label={`Montant en ${to.currency}`}
+                  aria-label={
+                    `Montant en ${to.currency}`
+                  }
                 />
 
 
@@ -821,15 +1238,12 @@ Merci de m'indiquer la procédure à suivre.`;
 
           {/* ===============================================
               TAUX + COMMISSION
-          =============================================== */}
+              =============================================== */}
 
           <div className="rate-container">
 
-
             <div className="rate">
-
               1 MAD = {rate} FCFA
-
             </div>
 
 
@@ -847,10 +1261,9 @@ Merci de m'indiquer la procédure à suivre.`;
 
         {/* =================================================
             TRANSFERT
-        ================================================= */}
+            ================================================= */}
 
         <section className="transfer-section">
-
 
           <div className="transfer-header">
 
@@ -859,12 +1272,10 @@ Merci de m'indiquer la procédure à suivre.`;
             </h1>
 
             <p>
-
               Contactez un agent WhatsApp pour
               valider
               <br />
               l’opération en 2 minutes.
-
             </p>
 
           </div>
@@ -872,14 +1283,17 @@ Merci de m'indiquer la procédure à suivre.`;
 
           {/* ===============================================
               AGENT DÉPÔT
-          =============================================== */}
+              =============================================== */}
 
-          <div className="agent-card" onClick={() =>
-                openWhatsApp(
-                  depositPhone,
-                  "deposit"
-                )
-              }>
+          <div
+            className="agent-card"
+            onClick={() =>
+              openWhatsApp(
+                depositPhone,
+                "deposit"
+              )
+            }
+          >
 
             <div className="agent-info">
 
@@ -891,16 +1305,12 @@ Merci de m'indiquer la procédure à suivre.`;
               <div>
 
                 <strong>
-
                   Dépôt {from.country}
-
                 </strong>
 
 
                 <span>
-
                   {depositPhone}
-
                 </span>
 
               </div>
@@ -917,7 +1327,9 @@ Merci de m'indiquer la procédure à suivre.`;
                   "deposit"
                 )
               }
-              aria-label={`Contacter l'agent de dépôt ${from.country}`}
+              aria-label={
+                `Contacter l'agent de dépôt ${from.country}`
+              }
             >
 
               <span>
@@ -931,14 +1343,17 @@ Merci de m'indiquer la procédure à suivre.`;
 
           {/* ===============================================
               AGENT RETRAIT
-          =============================================== */}
+              =============================================== */}
 
-          <div className="agent-card" onClick={() =>
-                openWhatsApp(
-                  withdrawalPhone,
-                  "withdrawal"
-                )
-              }>
+          <div
+            className="agent-card"
+            onClick={() =>
+              openWhatsApp(
+                withdrawalPhone,
+                "withdrawal"
+              )
+            }
+          >
 
             <div className="agent-info">
 
@@ -950,16 +1365,12 @@ Merci de m'indiquer la procédure à suivre.`;
               <div>
 
                 <strong>
-
                   Retrait {to.country}
-
                 </strong>
 
 
                 <span>
-
                   {withdrawalPhone}
-
                 </span>
 
               </div>
@@ -976,7 +1387,9 @@ Merci de m'indiquer la procédure à suivre.`;
                   "withdrawal"
                 )
               }
-              aria-label={`Contacter l'agent de retrait ${to.country}`}
+              aria-label={
+                `Contacter l'agent de retrait ${to.country}`
+              }
             >
 
               <span>
@@ -987,15 +1400,21 @@ Merci de m'indiquer la procédure à suivre.`;
 
           </div>
 
+           {/* ===============================================
+              PARTENAIRES
+              =============================================== */}
+
+          <PartnersSection />
+
         </section>
+         
 
       </main>
 
 
-
-      {/* =========================
+      {/* =====================================================
           FOOTER
-      ========================= */}
+          ===================================================== */}
 
       <footer className="footer">
         © 2026 Mourakon Transfert
@@ -1004,4 +1423,6 @@ Merci de m'indiquer la procédure à suivre.`;
     </div>
   );
 }
+
+
 export default App;
